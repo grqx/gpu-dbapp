@@ -1,3 +1,4 @@
 import pathlib
+import os.path
 
-DB_PATH = pathlib.Path(__file__) / r'../../gpus.db'
+DB_PATH = os.path.realpath(pathlib.Path(__file__) / r'../../gpus.db')
