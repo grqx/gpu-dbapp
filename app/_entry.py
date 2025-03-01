@@ -1,5 +1,5 @@
 from . import DB_PATH
-from .db_utils import exec_statement
+from .db_utils import exec_statement, fetch_all_from_cursor
 from .setup import (
     setup_table,
     reg_arch,
@@ -8,7 +8,7 @@ from .setup import (
     reg_series,
     reg_proc,
 )
-from .sql_statements import SELECT_GET_ALL_GPU_DETAILS, GPU_DETAILS_COLUMNS
+from .sql_statements import SELECT_GET_ALL_GPU_DETAILS
 from .utils import fmt_table
 
 import os.path
@@ -27,4 +27,4 @@ def main():
             sid = reg_series(con, 'RTX 4000', 2022)
             mid = reg_manufacturer(con, 'Nvidia', 1993)
             reg_gpu(con, 'RTX 4090', pid, 2235, sid, mid, 24*1024, 159900)
-        print(fmt_table([GPU_DETAILS_COLUMNS, *exec_statement(con, SELECT_GET_ALL_GPU_DETAILS).fetchall()]), end='')
+        print(fmt_table(fetch_all_from_cursor(exec_statement(con, SELECT_GET_ALL_GPU_DETAILS))), end='')

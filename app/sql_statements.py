@@ -66,28 +66,24 @@ VALUES
 '''
 
 _ALWAYS_TRUE_CONDITION = r'1 = 1'
-_GPU_DETAILS_CONTENT = [
-    'GPU.name',
-    'Processor.proc_name',
-    'Architecture.arch_name',
-    'GPU.clock_speed_mhz',
-    'Series.series_name',
-    'Series.release_year',
-    'Manufacturer.manufacturer_name',
-    'Manufacturer.founded_year',
-    'GPU.vram_size_gb',
-    'GPU.price_cents'
-]
-_GPU_DETAILS_CONTENT_STR = ', '.join(_GPU_DETAILS_CONTENT)
-GPU_DETAILS_COLUMNS = tuple(''.join(x.split('.')[1:]) for x in _GPU_DETAILS_CONTENT)
-_SELECT_GET_GPU_DETAILS_GIVEN_CONDITION = rf'''
-SELECT {_GPU_DETAILS_CONTENT_STR}
+_SELECT_GET_GPU_DETAILS_GIVEN_CONDITION = r'''
+SELECT
+GPU.name,
+Processor.proc_name,
+Architecture.arch_name,
+GPU.clock_speed_mhz,
+Series.series_name,
+Series.release_year,
+Manufacturer.manufacturer_name,
+Manufacturer.founded_year,
+GPU.vram_size_gb,
+GPU.price_cents
 FROM GPU
 INNER JOIN Processor ON GPU.proc_id = Processor.proc_id
 INNER JOIN Architecture ON Processor.arch_id = Architecture.arch_id
 INNER JOIN Series ON GPU.series_id = Series.series_id
 INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
-WHERE {{select_gpu_condition}}
+WHERE {select_gpu_condition}
 ;
 '''
 
