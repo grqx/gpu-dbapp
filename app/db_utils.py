@@ -1,7 +1,7 @@
-import sqlite3
+import copy as _copy
+import sqlite3 as _sqlite3
+import operator as _operator
 from typing import Any
-import copy
-import operator
 
 
 class SQL_StatementTemplate:
@@ -12,12 +12,7 @@ class SQL_StatementTemplate:
         self.copy_on_modify = copy_on_modify
 
     def _modify(self):
-        if self.copy_on_modify:
-            ret = copy.deepcopy(self)
-            ret.copy_on_modify = False
-            return ret
-        else:
-            return self
+        return self.copy() if self.copy_on_modify else self
 
     def _add_more(self, more_sql: str | None = None) -> str:
         """
@@ -50,7 +45,9 @@ class SQL_StatementTemplate:
         return self._statement.format(*args, **kwargs)
 
     def copy(self):
-        return copy.deepcopy(self._statement)
+        ret = _copy.deepcopy(self)
+        ret.copy_on_modify = False
+        return ret
 
     @property
     def statement(self):
@@ -70,22 +67,22 @@ class SQL_StatementTemplate:
 
 class SQL_SelectTempl(SQL_StatementTemplate):
     def __init__(self, statement: str, copy_on_modify: bool = True, conditions: list = None, order_by: list = None):
-        self.conditions = [] if conditions is None else conditions
-        self.order_by = [] if order_by is None else order_by
+        self._conditions = [] if conditions is None else conditions
+        self._order_by = [] if order_by is None else order_by
         super().__init__(statement, copy_on_modify)
 
     def _op2sql(self, op):
-        if op is operator.eq:
+        if op is _operator.eq:
             return '='
-        elif op is operator.ne:
+        elif op is _operator.ne:
             return '!='
-        elif op is operator.gt:
+        elif op is _operator.gt:
             return '>'
-        elif op is operator.ge:
+        elif op is _operator.ge:
             return '>='
-        elif op is operator.lt:
+        elif op is _operator.lt:
             return '<'
-        elif op is operator.le:
+        elif op is _operator.le:
             return '<='
         else:
             raise ValueError(f'Invalid operator: {op}')
@@ -96,23 +93,23 @@ class SQL_SelectTempl(SQL_StatementTemplate):
     def _get_more(self):
         def cond2sql(condition):
             return f'{condition[0]} {self._op2sql(condition[1])} ?'
-        if self.conditions:
+        if self._conditions:
             self = self._modify()
             self._statement = self._add_more('WHERE')
-            self._statement = self._add_more(' AND '.join(cond2sql(condition) for condition in self.conditions))
+            self._statement = self._add_more(' AND '.join(cond2sql(condition) for condition in self._conditions))
 
         def order_by2sql(order):
             return f'{order[0]} {self._order2sql(order[1])}'
-        if self.order_by:
+        if self._order_by:
             self = self._modify()
             self._statement = self._add_more('ORDER BY')
-            self._statement = self._add_more(', '.join(order_by2sql(order) for order in self.order_by))
+            self._statement = self._add_more(', '.join(order_by2sql(order) for order in self._order_by))
         return self
 
     def _get_params(self):
-        return tuple(condition[2] for condition in self.conditions)
+        return tuple(condition[2] for condition in self._conditions)
 
-    def where(self, quoted_col: str, op: operator, value):
+    def where(self, quoted_col: str, op: type[_operator.eq], value):
         """
         Add a WHERE condition to the SQL statement. (If there are multiple conditions, they are ANDed together.)
 
@@ -122,7 +119,7 @@ class SQL_SelectTempl(SQL_StatementTemplate):
         :return: self
         """
         self = self._modify()
-        self.conditions.append((quoted_col, op, str(value)))
+        self._conditions.append((quoted_col, op, str(value)))
         return self
 
     def order_by(self, quoted_col: str, is_asc: bool):
@@ -134,11 +131,11 @@ class SQL_SelectTempl(SQL_StatementTemplate):
         :return: self
         """
         self = self._modify()
-        self.order_by.append((quoted_col, is_asc))
+        self._order_by.append((quoted_col, is_asc))
         return self
 
 
-def exec_statements(db_conn: sqlite3.Connection, *statements) -> sqlite3.Cursor:
+def exec_statements(db_conn: _sqlite3.Connection, *statements) -> _sqlite3.Cursor:
     """Execute statements given a connection"""
     cursor = db_conn.cursor()
     for statement in statements:
@@ -146,17 +143,17 @@ def exec_statements(db_conn: sqlite3.Connection, *statements) -> sqlite3.Cursor:
     return cursor
 
 
-def exec_statement(db_conn: sqlite3.Connection, statement: str, params=()) -> sqlite3.Cursor:
+def exec_statement(db_conn: _sqlite3.Connection, statement: str, params=()) -> _sqlite3.Cursor:
     """Execute a statement with parameters"""
     return db_conn.cursor().execute(statement, params)
 
 
-def get_header_from_cursor(cursor: sqlite3.Cursor) -> list[str | Any]:
+def get_header_from_cursor(cursor: _sqlite3.Cursor) -> list[str | Any]:
     """Get the header from a cursor"""
     return [desc[0] for desc in cursor.description]
 
 
-def fetch_all_from_cursor(cursor: sqlite3.Cursor,
+def fetch_all_from_cursor(cursor: _sqlite3.Cursor,
                           header: bool = True) -> list[tuple[Any, ...]]:
     """Fetch all rows from a cursor"""
     r = cursor.fetchall()
@@ -165,7 +162,7 @@ def fetch_all_from_cursor(cursor: sqlite3.Cursor,
     return r
 
 
-def fetch_many_from_cursor(cursor: sqlite3.Cursor,
+def fetch_many_from_cursor(cursor: _sqlite3.Cursor,
                            size: int = 1, header: bool = True) -> list[tuple[Any, ...]]:
     """Fetch one or many rows from a cursor"""
     r = cursor.fetchmany(size)

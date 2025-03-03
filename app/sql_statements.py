@@ -1,5 +1,6 @@
 """SQL statements for the GPU database."""
 from .db_utils import SQL_SelectTempl
+import operator as _operator
 
 
 CREATE_TABLE_STATEMENTS = [
@@ -88,8 +89,11 @@ INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
 ;
 ''')
 
-ALWAYS_TRUE_CONDITION = r'1 = 1'
-SELECT_GET_ALL_GPU_DETAILS = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(sql_more=r'')
-SELECT_GET_GPU_DETAILS_PERF_DESC = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(sql_more=r'ORDER BY GPU.clock_speed_mhz DESC, GPU.vram_size_gb DESC')
+ALWAYS_TRUE_CONDITION = (r'1', _operator.eq, r'1')
+SELECT_GET_ALL_GPU_DETAILS = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.statement
+SELECT_GET_GPU_DETAILS_PERF_DESC = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION \
+    .order_by(r'GPU.clock_speed_mhz', is_asc=False) \
+    .order_by(r'GPU.vram_size_gb', is_asc=False).statement
 # receives 1 param: id
-SELECT_GET_GPU_DETAILS_BY_ID = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(sql_more=r'WHERE GPU.id = ?')
+SELECT_GET_GPU_DETAILS_BY_ID = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION \
+    .where(r'GPU.id', _operator.eq, None).statement

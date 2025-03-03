@@ -1,8 +1,8 @@
-import datetime
+import datetime as _datetime
 
 
 def current_year() -> int:
-    return datetime.datetime.now().year
+    return _datetime.datetime.now().year
 
 
 def fmt_table(table: list[tuple], intersection: str = '+', hbar: str = '-',
@@ -44,3 +44,28 @@ def fmt_table(table: list[tuple], intersection: str = '+', hbar: str = '-',
         return ret + delim + ''.join(prow(row) for row in table[1:]) + delim
     else:
         return ret
+
+
+def console_menu(title: str, *options: str, prompt: str = 'Choose an option: ', default=None) -> int:
+    """
+    Display a really simple console menu
+
+    :param title: The title of the menu
+    :param options: The options
+    :param prompt: The prompt
+    :return: The index of the chosen option
+    """
+    print(title)
+    for idx, option in enumerate(options, 1):
+        print(f'{idx}. {option}')
+    try:
+        res = int(input(prompt)) - 1
+        if not 0 <= res < len(options):
+            raise ValueError
+        return options[res]
+    except ValueError:
+        return default
+
+
+def fancy_console_menu():
+    """Fancy console menu, TODO"""
