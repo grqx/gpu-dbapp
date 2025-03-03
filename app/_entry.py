@@ -27,4 +27,5 @@ def main():
             sid = reg_series(con, 'RTX 4000', 2022)
             mid = reg_manufacturer(con, 'Nvidia', 1993)
             reg_gpu(con, 'RTX 4090', pid, 2235, sid, mid, 24*1024, 159900)
+            con.commit()
         print(fmt_table(fetch_all_from_cursor(exec_statement(con, SELECT_GET_ALL_GPU_DETAILS))), end='')

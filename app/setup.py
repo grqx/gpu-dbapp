@@ -19,30 +19,22 @@ def setup_table(con: sqlite3.Connection) -> None:
 
 def reg_series(con: sqlite3.Connection, name: str, rel_year: int = current_year()) -> int:
     """Register a new GPU series"""
-    id_ = exec_statement(con, INSERT_SERIES_STATEMENT, (name, rel_year)).lastrowid
-    con.commit()
-    return id_
+    return exec_statement(con, INSERT_SERIES_STATEMENT, (name, rel_year)).lastrowid
 
 
 def reg_arch(con: sqlite3.Connection, name: str) -> int:
     """Register a new gpu architecture"""
-    id_ = exec_statement(con, INSERT_ARCH_STATEMENT, (name,)).lastrowid
-    con.commit()
-    return id_
+    return exec_statement(con, INSERT_ARCH_STATEMENT, (name,)).lastrowid
 
 
 def reg_manufacturer(con: sqlite3.Connection, name: str, founded_yr: int) -> int:
     """Register a new manufacturer"""
-    id_ = exec_statement(con, INSERT_MANU_STATEMENT, (name, founded_yr)).lastrowid
-    con.commit()
-    return id_
+    return exec_statement(con, INSERT_MANU_STATEMENT, (name, founded_yr)).lastrowid
 
 
 def reg_proc(con: sqlite3.Connection, name: str, arch_id: int) -> int:
     """Register a new processor"""
-    id_ = exec_statement(con, INSERT_PROC_STATEMENT, (name, arch_id)).lastrowid
-    con.commit()
-    return id_
+    return exec_statement(con, INSERT_PROC_STATEMENT, (name, arch_id)).lastrowid
 
 
 @typing.overload
@@ -53,6 +45,4 @@ def reg_gpu(con: sqlite3.Connection,
 
 
 def reg_gpu(con: sqlite3.Connection, *args) -> int:
-    id_ = exec_statement(con, INSERT_GPU_STATEMENT, tuple(args)).lastrowid
-    con.commit()
-    return id_
+    return exec_statement(con, INSERT_GPU_STATEMENT, tuple(args)).lastrowid

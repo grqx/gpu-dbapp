@@ -1,4 +1,6 @@
 """SQL statements for the GPU database."""
+from .db_utils import SQL_SelectTempl
+
 
 CREATE_TABLE_STATEMENTS = [
     r'''
@@ -65,8 +67,7 @@ VALUES
 (?, ?, ?, ?, ?, ?, ?);
 '''
 
-_ALWAYS_TRUE_CONDITION = r'1 = 1'
-_SELECT_GET_GPU_DETAILS_GIVEN_CONDITION = r'''
+_SELECT_GET_GPU_DETAILS_GIVEN_CONDITION = SQL_SelectTempl(r'''
 SELECT
 GPU.name,
 Processor.proc_name,
@@ -83,10 +84,12 @@ INNER JOIN Processor ON GPU.proc_id = Processor.proc_id
 INNER JOIN Architecture ON Processor.arch_id = Architecture.arch_id
 INNER JOIN Series ON GPU.series_id = Series.series_id
 INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
-WHERE {select_gpu_condition}
+{sql_more}
 ;
-'''
+''')
 
-SELECT_GET_ALL_GPU_DETAILS = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(select_gpu_condition=_ALWAYS_TRUE_CONDITION)
+ALWAYS_TRUE_CONDITION = r'1 = 1'
+SELECT_GET_ALL_GPU_DETAILS = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(sql_more=r'')
+SELECT_GET_GPU_DETAILS_PERF_DESC = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(sql_more=r'ORDER BY GPU.clock_speed_mhz DESC, GPU.vram_size_gb DESC')
 # receives 1 param: id
-SELECT_GET_GPU_DETAILS_BY_ID = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(select_gpu_condition=r'GPU.id = ?')
+SELECT_GET_GPU_DETAILS_BY_ID = _SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.format(sql_more=r'WHERE GPU.id = ?')
