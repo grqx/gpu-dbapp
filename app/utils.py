@@ -1,4 +1,6 @@
 import datetime as _datetime
+import typing as _typing
+from dataclasses import dataclass as _dataclass
 
 
 def current_year() -> int:
@@ -46,26 +48,124 @@ def fmt_table(table: list[tuple], intersection: str = '+', hbar: str = '-',
         return ret
 
 
-def console_menu(title: str, *options: str, prompt: str = 'Choose an option: ', default=None) -> int:
-    """
-    Display a really simple console menu
+@_dataclass
+class FancyMenuKeyBinds:
+    SELECT_KEYS: tuple[str]
+    EXIT_KEYS: tuple[str]
+    DOWN_KEYS: tuple[str]
+    UP_KEYS: tuple[str]
 
-    :param title: The title of the menu
-    :param options: The options
-    :param prompt: The prompt
-    :return: The index of the chosen option
+
+def fancy_console_menu(title: str,
+                       options: list[tuple[str, _typing.Optional[_typing.Callable[[int, str], tuple[bool, _typing.Any]]]]],
+                       initial_idx: int = 0, default_idx: int = 0,
+                       hl_prefix: str = '\033[1;32m',
+                       hl_suffix: str = '\033[0m',
+                       bottom_note: str | None = None,
+                       kbinds: FancyMenuKeyBinds | None = None,
+                       allow_num_keys: bool = True) -> tuple[int, str, _typing.Any] | None:
     """
-    print(title)
-    for idx, option in enumerate(options, 1):
-        print(f'{idx}. {option}')
+    Fancy console menu, TODO:docstring
+
+    """
+    import os
+    if kbinds is None:
+        kbinds = FancyMenuKeyBinds(
+            SELECT_KEYS=('\n', '\r'),
+            EXIT_KEYS=('q', '\x1b'),
+            DOWN_KEYS=('j', '\xe0P' if os.name == 'nt' else '\x1b[B'),
+            UP_KEYS=('k', '\xe0H' if os.name == 'nt' else '\x1b[A')
+        )
+
+    def reset_cursor():
+        # dont need to flush explicitly because more data will
+        # be coming in the next print statement
+        print('\033[H\033[J', end='')
+
+    def pmenu(hl_idx: int = initial_idx):
+        print(title)
+        for idx, opt in enumerate(options):
+            item = f'{idx + 1}. {str(opt[0])}'
+            print(f'{hl_prefix}{item}{hl_suffix}' if idx == hl_idx else item)
+        if bottom_note is not None:
+            print(str(bottom_note))
+
+    def return_hook(idx: int | None = default_idx) -> tuple[int, str, _typing.Any] | None:
+        if idx is None:
+            return None
+        opt_name, opt_callback = options[idx]
+        opt_name = str(opt_name)
+        if opt_callback is not None:
+            exit_menu, retn = opt_callback(idx, str(opt_name))
+            if exit_menu:
+                return (idx, opt_name, retn)
+            return fancy_console_menu(
+                title=title, options=options,
+                initial_idx=retn or initial_idx, hl_prefix=hl_prefix,
+                hl_suffix=hl_suffix,
+                bottom_note=bottom_note,
+                kbinds=kbinds, allow_num_keys=allow_num_keys)
+        return (idx, opt_name, None)
+
+    def get_key():
+        if os.name == 'nt':
+            import msvcrt
+            ch = msvcrt.getch()
+            if ch == b'\xe0' or ch == b'\x00':
+                ch += msvcrt.getch()
+            elif ch == b'\x03':
+                raise KeyboardInterrupt
+            elif ch == b'\x1a':
+                raise EOFError
+            return ch.decode('utf-8', errors='ignore')
+        else:
+            import sys
+            import tty
+            import termios
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(fd)
+                ch = sys.stdin.read(1)
+                if not ch:
+                    raise EOFError
+                elif ch == '\x03':
+                    raise KeyboardInterrupt
+                if ch == '\x1b':  # Escape sequence
+                    ch += sys.stdin.read(2)  # Read next two chars (arrow keys)
+                return ch
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    if not options:
+        print(title)
+        print(bottom_note)
+        return return_hook(None)
+
+    curr_idx = initial_idx
+    refresh = True
     try:
-        res = int(input(prompt)) - 1
-        if not 0 <= res < len(options):
-            raise ValueError
-        return options[res]
-    except ValueError:
-        return default
-
-
-def fancy_console_menu():
-    """Fancy console menu, TODO"""
+        while True:
+            if refresh:
+                reset_cursor()
+                pmenu(curr_idx)
+                refresh = False
+            key = get_key()
+            refresh = True
+            if key in kbinds.SELECT_KEYS:
+                return return_hook(curr_idx)
+            elif key in kbinds.EXIT_KEYS:
+                return return_hook()
+            elif key in kbinds.DOWN_KEYS:
+                curr_idx = (curr_idx + 1) % len(options)
+            elif key in kbinds.UP_KEYS:
+                curr_idx = (curr_idx - 1) % len(options)
+            elif allow_num_keys and key.isdigit() and 0 <= (idx := int(key) - 1) < len(options):
+                curr_idx = idx
+            else:
+                refresh = False
+            # we dont need a timeout because get_key will poll for input
+    except (KeyboardInterrupt, EOFError) as e:
+        print(e.__class__.__name__)
+        # do not use curr_idx
+        return return_hook(default_idx)
