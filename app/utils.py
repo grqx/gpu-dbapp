@@ -48,6 +48,12 @@ def fmt_table(table: list[tuple], intersection: str = '+', hbar: str = '-',
         return ret
 
 
+def reset_cursor():
+    # dont need to flush explicitly because more data will
+    # be coming in the next print statement
+    print('\033[H\033[J', end='')
+
+
 @_dataclass
 class FancyMenuKeyBinds:
     SELECT_KEYS: tuple[str]
@@ -57,38 +63,67 @@ class FancyMenuKeyBinds:
 
 
 def fancy_console_menu(title: str,
-                       options: list[tuple[str, _typing.Optional[_typing.Callable[[int, str], tuple[bool, _typing.Any]]]]],
+                       options: list[tuple[str, _typing.Optional[_typing.Callable[[int, str, _typing.Any, dict], tuple[bool, _typing.Any]]]]],
+                       bottom_note: str | None = None,
                        initial_idx: int = 0, default_idx: int = 0,
                        hl_prefix: str = '\033[1;32m',
                        hl_suffix: str = '\033[0m',
-                       bottom_note: str | None = None,
                        kbinds: FancyMenuKeyBinds | None = None,
                        allow_num_keys: bool = True) -> tuple[int, str, _typing.Any] | None:
     """
-    Fancy console menu, TODO:docstring
+    Displays an interactive console menu with keyboard navigation.
 
+    :param title: The title of the menu, displayed at the top.
+    :type title: str
+    :param options: A list of options, where each option is a tuple consisting of:
+        - The option's display name.
+        - An optional callback function that takes (index, option name) and
+          returns (exit_menu, return_value).
+    :type options: list[tuple[str, Optional[Callable[[int, str, Any, dict], tuple[bool, Any]]]]]
+    :param initial_idx: The initially highlighted option index, defaults to 0.
+    :type initial_idx: int, optional
+    :param default_idx: The default index to return if exited via an exit key, defaults to 0.
+    :type default_idx: int, optional
+    :param hl_prefix: ANSI escape sequence for highlighting selected options, defaults to green text.
+    :type hl_prefix: str, optional
+    :param hl_suffix: ANSI escape sequence for resetting text formatting, defaults to reset.
+    :type hl_suffix: str, optional
+    :param bottom_note: A message displayed at the bottom of the menu, defaults to None.
+    :type bottom_note: Optional[str], optional
+    :param kbinds: Key bindings for menu navigation, defaults to None.
+    :type kbinds: Optional[FancyMenuKeyBinds], optional
+    :param allow_num_keys: Whether number keys can be used to select options, defaults to True.
+    :type allow_num_keys: bool, optional
+
+    :return: A tuple containing:
+        - Selected option index.
+        - Selected option name.
+        - Return value from the callback function (if any).
+        If the menu is exited via an exit key, returns None.
+    :rtype: tuple[int, str, Any] | None
+
+    :raises KeyboardInterrupt: If Ctrl+C is pressed.
+    :raises EOFError: If Ctrl+Z (Windows) or Ctrl+D (Unix) is pressed.
     """
+    arg_dict = dict(locals())
     import os
     if kbinds is None:
         kbinds = FancyMenuKeyBinds(
             SELECT_KEYS=('\n', '\r'),
             EXIT_KEYS=('q', '\x1b'),
-            DOWN_KEYS=('j', '\xe0P' if os.name == 'nt' else '\x1b[B'),
-            UP_KEYS=('k', '\xe0H' if os.name == 'nt' else '\x1b[A')
+            DOWN_KEYS=('j', *(('\xe0P', '\x00P') if os.name == 'nt' else ('\x1b[B'))),
+            UP_KEYS=('k', *(('\xe0H', '\x00H') if os.name == 'nt' else ('\x1b[A')))
         )
 
-    def reset_cursor():
-        # dont need to flush explicitly because more data will
-        # be coming in the next print statement
-        print('\033[H\033[J', end='')
-
     def pmenu(hl_idx: int = initial_idx):
-        print(title)
+        print(str(title), end='')
         for idx, opt in enumerate(options):
             item = f'{idx + 1}. {str(opt[0])}'
             print(f'{hl_prefix}{item}{hl_suffix}' if idx == hl_idx else item)
         if bottom_note is not None:
-            print(str(bottom_note))
+            print(str(bottom_note), end='')
+        else:
+            print('\nUse j, k, arrow keys or number keys to navigate, enter to select, and q or esc to quit')
 
     def return_hook(idx: int | None = default_idx) -> tuple[int, str, _typing.Any] | None:
         if idx is None:
@@ -96,22 +131,15 @@ def fancy_console_menu(title: str,
         opt_name, opt_callback = options[idx]
         opt_name = str(opt_name)
         if opt_callback is not None:
-            exit_menu, retn = opt_callback(idx, str(opt_name))
-            if exit_menu:
-                return (idx, opt_name, retn)
-            return fancy_console_menu(
-                title=title, options=options,
-                initial_idx=retn or initial_idx, hl_prefix=hl_prefix,
-                hl_suffix=hl_suffix,
-                bottom_note=bottom_note,
-                kbinds=kbinds, allow_num_keys=allow_num_keys)
+            retn = opt_callback(idx, str(opt_name), fancy_console_menu, arg_dict)
+            return (idx, opt_name, retn)
         return (idx, opt_name, None)
 
     def get_key():
         if os.name == 'nt':
             import msvcrt
             ch = msvcrt.getch()
-            if ch == b'\xe0' or ch == b'\x00':
+            if ch in (b'\xe0', b'\x00'):
                 ch += msvcrt.getch()
             elif ch == b'\x03':
                 raise KeyboardInterrupt
@@ -138,8 +166,7 @@ def fancy_console_menu(title: str,
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
     if not options:
-        print(title)
-        print(bottom_note)
+        pmenu()
         return return_hook(None)
 
     curr_idx = initial_idx
