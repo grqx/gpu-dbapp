@@ -1,5 +1,8 @@
+from __future__ import annotations
 import datetime as _datetime
 import typing as _typing
+if _typing.TYPE_CHECKING:
+    import sqlite3 as _sqlite3
 from dataclasses import dataclass as _dataclass
 
 
@@ -196,3 +199,53 @@ def fancy_console_menu(title: str,
         print(e.__class__.__name__)
         # do not use curr_idx
         return return_hook(default_idx)
+
+
+def variadic(x):
+    return (x,) if not isinstance(x, tuple) else x
+
+
+class SuppressAndExec:
+    def __init__(self, excs, fn, *args, **kwargs):
+        self._fn = fn
+        self._fn_args = args
+        self._fn_kwargs = kwargs
+        self._expected_excs = variadic(excs)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if exc_type is None:
+            # no exception
+            self._fn(*self._fn_args, **self._fn_kwargs)
+        elif issubclass(exc_type, self._expected_excs):
+            # expected exception
+            self._fn(*self._fn_args, **self._fn_kwargs)
+            return True
+        return False
+
+
+def make_reg_callback(db_reg_fn, name: str, conn: _sqlite3.Connection, timeout: float):
+    import time
+    import inspect
+
+    def reg_cb(_, __, fn, d):
+        reset_cursor()
+        with SuppressAndExec((KeyboardInterrupt, EOFError), lambda: fn(**d)[2]):
+            params = inspect.signature(db_reg_fn).parameters.values()
+            fn_kwargs: dict[str, _typing.Any | None] = {}
+            for i, param in enumerate(params):
+                if i == 0:
+                    # skip the first arg: connection
+                    continue
+                if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                    raise TypeError(f'Callback {db_reg_fn.__name__} cannot have positional or keyword argument {param.name}')
+                fn_kwargs[param.name] = None
+            for fn_arg_name in fn_kwargs.keys():
+                fn_kwargs[fn_arg_name] = input(f'{name.capitalize()} {fn_arg_name.replace('_', ' ')}? ')
+            id_ = db_reg_fn(conn, **fn_kwargs)
+            conn.commit()
+            print(f'Registered {name.lower()}, id: {id_}')
+            time.sleep(timeout)
+    return reg_cb

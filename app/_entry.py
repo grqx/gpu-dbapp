@@ -9,8 +9,9 @@ from .setup import (
     reg_proc,
 )
 from .sql_statements import SELECT_GET_GPU_DETAILS_PERF_DESC
-from .utils import fmt_table, fancy_console_menu, reset_cursor
+from .utils import fmt_table, fancy_console_menu, reset_cursor, SuppressAndExec, make_reg_callback
 
+import functools
 import os.path
 import sqlite3
 import sys
@@ -35,12 +36,10 @@ def main():
 
         def print_all_gpus_fn(idx, name, fn, d):
             def perf_desc(_, __, ___, ____):
-                reset_cursor()
-                print(fmt_table(fetch_all_from_cursor(exec_statement(con, SELECT_GET_GPU_DETAILS_PERF_DESC))), end='')
-                try:
+                with SuppressAndExec(KeyboardInterrupt, print_all_gpus_fn, idx, name, fn, d):
+                    reset_cursor()
+                    print(fmt_table(fetch_all_from_cursor(exec_statement(con, SELECT_GET_GPU_DETAILS_PERF_DESC))), end='')
                     time.sleep(RETURN_TIMEOUT)
-                finally:
-                    return print_all_gpus_fn(idx, name, fn, d)
             return fn(**{
                 **d,
                 'options': [
@@ -51,29 +50,19 @@ def main():
                 'default_idx': 1,
             })[2]
 
-        def reg_arch_fn(idx, _, fn, d):
-            reset_cursor()
-            try:
-                arch_name = input('Architecture name? ')
-            except (KeyboardInterrupt, EOFError):
-                return fn(**d)[2]
-            id_ = reg_arch(con, arch_name)
-            con.commit()
-            print(f'Registered architecture {arch_name}, id: {id_}')
-            try:
-                time.sleep(RETURN_TIMEOUT)
-            finally:
-                return fn(**d)[2]
-
         def exit_(_, __, fn, d):
             reset_cursor()
-            print(end='')
             return 0
+
+        make_reg_cb_partial = functools.partial(make_reg_callback, conn=con, timeout=RETURN_TIMEOUT)
 
         sys.exit(fancy_console_menu(
             'Welcome to my GPU DB app!\n',
             [
                 ('Print all GPUs', print_all_gpus_fn),
-                ('Register a new GPU architecture', reg_arch_fn),
+                ('Register a new GPU architecture', make_reg_cb_partial(reg_arch, 'architecture')),
+                ('Register a new GPU processor', make_reg_cb_partial(reg_proc, 'processor')),
+                ('Register a new GPU series', make_reg_cb_partial(reg_series, 'series')),
+                ('Register a new GPU manufacturer', make_reg_cb_partial(reg_manufacturer, 'manufacturer')),
                 ('Exit', exit_),
             ], default_idx=-1)[2])
