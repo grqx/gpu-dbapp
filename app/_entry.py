@@ -8,7 +8,7 @@ from .setup import (
     reg_series,
     reg_proc,
 )
-from .sql_statements import SELECT_GET_GPU_DETAILS_PERF_DESC
+from .sql_statements import SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
 from .utils import fmt_table, fancy_console_menu, reset_cursor, SuppressAndExec, make_reg_callback
 
 import functools
@@ -35,19 +35,44 @@ def main():
             con.commit()
 
         def print_all_gpus_fn(idx, name, fn, d):
-            def perf_desc(_, __, ___, ____):
-                with SuppressAndExec(KeyboardInterrupt, print_all_gpus_fn, idx, name, fn, d):
-                    reset_cursor()
-                    print(fmt_table(fetch_all_from_cursor(exec_statement(con, SELECT_GET_GPU_DETAILS_PERF_DESC))), end='')
-                    time.sleep(RETURN_TIMEOUT)
+            def print_gpu_menu_opt(timeout, *exceptions):
+                def pgpu_decorator(func):
+                    @functools.wraps(func)
+                    def wrapper(*args, **kwargs):
+                        with SuppressAndExec(tuple({KeyboardInterrupt, *exceptions}), print_all_gpus_fn, idx, name, fn, d):
+                            reset_cursor()
+                            print(func(*args, **kwargs), end='')
+                            time.sleep(timeout)
+                    return wrapper
+                return pgpu_decorator
+
+            @print_gpu_menu_opt(RETURN_TIMEOUT)
+            def perf_desc(*_args, **_kwargs):
+                return fmt_table(fetch_all_from_cursor(exec_statement(
+                    con, (
+                        SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+                        .order_by(r'GPU.clock_speed_mhz', is_asc=False)
+                        .order_by(r'GPU.vram_size_gb', is_asc=False)
+                        .statement))))
+
+            @print_gpu_menu_opt(RETURN_TIMEOUT)
+            def price_desc(*_args, **_kwargs):
+                return fmt_table(fetch_all_from_cursor(exec_statement(
+                    con, (
+                        SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+                        .order_by(r'GPU.price_cents', is_asc=False)
+                        .statement
+                    ))))
+
             return fn(**{
                 **d,
                 'options': [
                     ('Order by performance descending', perf_desc),
+                    ('Order by price descending', price_desc),
                     ('Back', lambda _, __, ___, ____: fn(**d)[2]),
                 ],
                 'initial_idx': idx,
-                'default_idx': 1,
+                'default_idx': -1,
             })[2]
 
         def exit_(_, __, fn, d):
@@ -59,7 +84,7 @@ def main():
         sys.exit(fancy_console_menu(
             'Welcome to my GPU DB app!\n',
             [
-                ('Print all GPUs', print_all_gpus_fn),
+                ('List all GPUs', print_all_gpus_fn),
                 ('Register a new GPU architecture', make_reg_cb_partial(reg_arch, 'architecture')),
                 ('Register a new GPU processor', make_reg_cb_partial(reg_proc, 'processor')),
                 ('Register a new GPU series', make_reg_cb_partial(reg_series, 'series')),
