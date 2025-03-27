@@ -1,13 +1,16 @@
 from __future__ import annotations
-import datetime as _datetime
-import typing as _typing
-if _typing.TYPE_CHECKING:
-    import sqlite3 as _sqlite3
-from dataclasses import dataclass as _dataclass
+import datetime
+import typing
+if typing.TYPE_CHECKING:
+    import sqlite3
+import time
+import traceback
+import inspect
+from dataclasses import dataclass
 
 
 def current_year() -> int:
-    return _datetime.datetime.now().year
+    return datetime.datetime.now().year
 
 
 def fmt_table(table: list[tuple], intersection: str = '+', hbar: str = '-',
@@ -57,7 +60,7 @@ def reset_cursor():
     print('\033[H\033[J', end='')
 
 
-@_dataclass
+@dataclass
 class FancyMenuKeyBinds:
     SELECT_KEYS: tuple[str]
     EXIT_KEYS: tuple[str]
@@ -66,13 +69,13 @@ class FancyMenuKeyBinds:
 
 
 def fancy_console_menu(title: str,
-                       options: list[tuple[str, _typing.Optional[_typing.Callable[[int, str, _typing.Any, dict], tuple[bool, _typing.Any]]]]],
+                       options: list[tuple[str, typing.Optional[typing.Callable[[int, str, typing.Any, dict], tuple[bool, typing.Any]]]]],
                        bottom_note: str | None = None,
                        initial_idx: int = 0, default_idx: int = 0,
                        hl_prefix: str = '\033[1;32m',
                        hl_suffix: str = '\033[0m',
                        kbinds: FancyMenuKeyBinds | None = None,
-                       allow_num_keys: bool = True) -> tuple[int, str, _typing.Any] | None:
+                       allow_num_keys: bool = True) -> tuple[int, str, typing.Any] | None:
     """
     Displays an interactive console menu with keyboard navigation.
 
@@ -128,7 +131,7 @@ def fancy_console_menu(title: str,
         else:
             print('\nUse j, k, arrow keys or number keys to navigate, enter to select, and q or esc to quit')
 
-    def return_hook(idx: int | None = default_idx) -> tuple[int, str, _typing.Any] | None:
+    def return_hook(idx: int | None = default_idx) -> tuple[int, str, typing.Any] | None:
         if idx is None:
             return None
         opt_name, opt_callback = options[idx]
@@ -219,23 +222,29 @@ class SuppressAndExec:
         if exc_type is None:
             # no exception
             self._fn(*self._fn_args, **self._fn_kwargs)
+            return False
         elif issubclass(exc_type, self._expected_excs):
             # expected exception
             self._fn(*self._fn_args, **self._fn_kwargs)
             return True
+        traceback.print_tb(tb)
         return False
 
 
-def make_reg_callback(db_reg_fn, name: str, conn: _sqlite3.Connection, timeout: float):
-    import time
-    import inspect
+def to_arg_type(param_sig: inspect.Parameter, val: typing.Any) -> typing.Any:
+    param_anno = param_sig.annotation
+    return param_sig.annotation(val) if param_anno is not inspect.Parameter.empty else val
 
+
+def make_reg_callback(db_reg_fn, name: str, conn: sqlite3.Connection, timeout: float):
     def reg_cb(_, __, fn, d):
-        reset_cursor()
         with SuppressAndExec((KeyboardInterrupt, EOFError), lambda: fn(**d)[2]):
-            params = inspect.signature(db_reg_fn).parameters.values()
-            fn_kwargs: dict[str, _typing.Any | None] = {}
-            for i, param in enumerate(params):
+            reset_cursor()
+            overloads = typing.get_overloads(db_reg_fn)
+            db_reg_fn_4sig = db_reg_fn if not overloads else overloads[0]
+            params = inspect.signature(db_reg_fn_4sig).parameters
+            fn_kwargs: dict[str, typing.Any | None] = {}
+            for i, param in enumerate(params.values()):
                 if i == 0:
                     # skip the first arg: connection
                     continue
@@ -243,8 +252,16 @@ def make_reg_callback(db_reg_fn, name: str, conn: _sqlite3.Connection, timeout: 
                     raise TypeError(f'Callback {db_reg_fn.__name__} cannot have positional or keyword argument {param.name}')
                 fn_kwargs[param.name] = None
             for fn_arg_name in fn_kwargs.keys():
-                fn_kwargs[fn_arg_name] = input(f'{name.capitalize()} {fn_arg_name.replace('_', ' ')}? ')
-            id_ = db_reg_fn(conn, **fn_kwargs)
+                while True:
+                    rawi = input(f'{name} {fn_arg_name.replace('_', ' ')}? ')
+                    try:
+                        fn_kwargs[fn_arg_name] = to_arg_type(params[fn_arg_name], rawi)
+                    except Exception:
+                        traceback.print_exc()
+                        pass
+                    else:
+                        break
+            id_ = db_reg_fn(conn, *fn_kwargs.values())
             conn.commit()
             print(f'Registered {name.lower()}, id: {id_}')
             time.sleep(timeout)

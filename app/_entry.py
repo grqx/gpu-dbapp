@@ -31,7 +31,7 @@ def main():
             pid = reg_proc(con, 'AD102', aid)
             sid = reg_series(con, 'RTX 4000', 2022)
             mid = reg_manufacturer(con, 'Nvidia', 1993)
-            reg_gpu(con, 'RTX 4090', pid, 2235, sid, mid, 24*1024, 159900)
+            reg_gpu(con, 'RTX 4090', pid, 2235, sid, mid, 24, 159900)
             con.commit()
 
         def print_all_gpus_fn(idx, name, fn, d):
@@ -64,11 +64,21 @@ def main():
                         .statement
                     ))))
 
+            @print_gpu_menu_opt(RETURN_TIMEOUT)
+            def price_asc(*_args, **_kwargs):
+                return fmt_table(fetch_all_from_cursor(exec_statement(
+                    con, (
+                        SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+                        .order_by(r'GPU.price_cents', is_asc=True)
+                        .statement
+                    ))))
+
             return fn(**{
                 **d,
                 'options': [
                     ('Order by performance descending', perf_desc),
                     ('Order by price descending', price_desc),
+                    ('Order by price ascending', price_asc),
                     ('Back', lambda _, __, ___, ____: fn(**d)[2]),
                 ],
                 'initial_idx': idx,
@@ -85,9 +95,10 @@ def main():
             'Welcome to my GPU DB app!\n',
             [
                 ('List all GPUs', print_all_gpus_fn),
-                ('Register a new GPU architecture', make_reg_cb_partial(reg_arch, 'architecture')),
-                ('Register a new GPU processor', make_reg_cb_partial(reg_proc, 'processor')),
-                ('Register a new GPU series', make_reg_cb_partial(reg_series, 'series')),
-                ('Register a new GPU manufacturer', make_reg_cb_partial(reg_manufacturer, 'manufacturer')),
+                ('Register a new GPU architecture', make_reg_cb_partial(reg_arch, 'Architecture')),
+                ('Register a new GPU processor', make_reg_cb_partial(reg_proc, 'Processor')),
+                ('Register a new GPU series', make_reg_cb_partial(reg_series, 'Series')),
+                ('Register a new GPU manufacturer', make_reg_cb_partial(reg_manufacturer, 'Manufacturer')),
+                ('Register a new GPU', make_reg_cb_partial(reg_gpu, 'GPU')),
                 ('Exit', exit_),
             ], default_idx=-1)[2])
