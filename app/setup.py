@@ -17,9 +17,9 @@ def setup_table(con: _sqlite3.Connection) -> None:
     exec_statements(con, *CREATE_TABLE_STATEMENTS)
 
 
-def reg_series(con: _sqlite3.Connection, name: str, rel_year: int = current_year()) -> int:
+def reg_series(con: _sqlite3.Connection, name: str, release_year: int = current_year()) -> int:
     """Register a new GPU series"""
-    return exec_statement(con, INSERT_SERIES_STATEMENT, (name, rel_year)).lastrowid
+    return exec_statement(con, INSERT_SERIES_STATEMENT, (name, release_year)).lastrowid
 
 
 def reg_arch(con: _sqlite3.Connection, name: str) -> int:
@@ -27,20 +27,20 @@ def reg_arch(con: _sqlite3.Connection, name: str) -> int:
     return exec_statement(con, INSERT_ARCH_STATEMENT, (name,)).lastrowid
 
 
-def reg_manufacturer(con: _sqlite3.Connection, name: str, founded_yr: int) -> int:
+def reg_manufacturer(con: _sqlite3.Connection, name: str, founded_year: int) -> int:
     """Register a new manufacturer"""
-    return exec_statement(con, INSERT_MANU_STATEMENT, (name, founded_yr)).lastrowid
+    return exec_statement(con, INSERT_MANU_STATEMENT, (name, founded_year)).lastrowid
 
 
-def reg_proc(con: _sqlite3.Connection, name: str, arch_id: int) -> int:
+def reg_proc(con: _sqlite3.Connection, name: str, architecture_id: int) -> int:
     """Register a new processor"""
-    return exec_statement(con, INSERT_PROC_STATEMENT, (name, arch_id)).lastrowid
+    return exec_statement(con, INSERT_PROC_STATEMENT, (name, architecture_id)).lastrowid
 
 
 @_typing.overload
 def reg_gpu(con: _sqlite3.Connection,
-            name: str, processor_id: int, clock_speed_mhz: int,
-            series_id: int, manufacturer_id: int, vram_size_gb: int, price_cents: int) -> int:
+            name: str, processor_id: int, clock_speed_in_mhz: int,
+            series_id: int, manufacturer_id: int, vram_size_gb: int, price_us_cents: int) -> int:
     """Register a new gpu"""
 
 
