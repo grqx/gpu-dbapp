@@ -1,6 +1,6 @@
-import copy as _copy
-import sqlite3 as _sqlite3
-import operator as _operator
+import copy
+import sqlite3
+import operator
 from typing import Any
 
 
@@ -45,7 +45,7 @@ class SQL_StatementTemplate:
         return self._statement.format(*args, **kwargs)
 
     def copy(self):
-        ret = _copy.deepcopy(self)
+        ret = copy.deepcopy(self)
         ret.copy_on_modify = False
         return ret
 
@@ -72,17 +72,17 @@ class SQL_SelectTempl(SQL_StatementTemplate):
         super().__init__(statement, copy_on_modify)
 
     def _op2sql(self, op):
-        if op is _operator.eq:
+        if op is operator.eq:
             return '='
-        elif op is _operator.ne:
+        elif op is operator.ne:
             return '!='
-        elif op is _operator.gt:
+        elif op is operator.gt:
             return '>'
-        elif op is _operator.ge:
+        elif op is operator.ge:
             return '>='
-        elif op is _operator.lt:
+        elif op is operator.lt:
             return '<'
-        elif op is _operator.le:
+        elif op is operator.le:
             return '<='
         else:
             raise ValueError(f'Invalid operator: {op}')
@@ -109,7 +109,7 @@ class SQL_SelectTempl(SQL_StatementTemplate):
     def _get_params(self):
         return tuple(condition[2] for condition in self._conditions)
 
-    def where(self, quoted_col: str, op: type[_operator.eq], value):
+    def where(self, quoted_col: str, op: type[operator.eq], value):
         """
         Add a WHERE condition to the SQL statement. (If there are multiple conditions, they are ANDed together.)
 
@@ -135,7 +135,7 @@ class SQL_SelectTempl(SQL_StatementTemplate):
         return self
 
 
-def exec_statements(db_conn: _sqlite3.Connection, *statements) -> _sqlite3.Cursor:
+def exec_statements(db_conn: sqlite3.Connection, *statements) -> sqlite3.Cursor:
     """Execute statements given a connection"""
     cursor = db_conn.cursor()
     for statement in statements:
@@ -143,17 +143,17 @@ def exec_statements(db_conn: _sqlite3.Connection, *statements) -> _sqlite3.Curso
     return cursor
 
 
-def exec_statement(db_conn: _sqlite3.Connection, statement: str, params=()) -> _sqlite3.Cursor:
+def exec_statement(db_conn: sqlite3.Connection, statement: str, params=()) -> sqlite3.Cursor:
     """Execute a statement with parameters"""
     return db_conn.cursor().execute(statement, params)
 
 
-def get_header_from_cursor(cursor: _sqlite3.Cursor) -> list[str | Any]:
+def get_header_from_cursor(cursor: sqlite3.Cursor) -> list[str | Any]:
     """Get the header from a cursor"""
     return [desc[0] for desc in cursor.description]
 
 
-def fetch_all_from_cursor(cursor: _sqlite3.Cursor,
+def fetch_all_from_cursor(cursor: sqlite3.Cursor,
                           header: bool = True) -> list[tuple[Any, ...]]:
     """Fetch all rows from a cursor"""
     r = cursor.fetchall()
@@ -162,7 +162,7 @@ def fetch_all_from_cursor(cursor: _sqlite3.Cursor,
     return r
 
 
-def fetch_many_from_cursor(cursor: _sqlite3.Cursor,
+def fetch_many_from_cursor(cursor: sqlite3.Cursor,
                            size: int = 1, header: bool = True) -> list[tuple[Any, ...]]:
     """Fetch one or many rows from a cursor"""
     r = cursor.fetchmany(size)
