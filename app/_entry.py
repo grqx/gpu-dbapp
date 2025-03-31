@@ -17,7 +17,7 @@ import sqlite3
 import sys
 import time
 
-RETURN_TIMEOUT = 1.5
+RETURN_TIMEOUT = 3
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     with sqlite3.connect(DB_PATH) as con:
         if not db_existed:
             print(f'Database "{DB_PATH}" does not exist, '
-                  f'Setting up a new table without data!')
+                  f'Setting up a new table!')
             setup_table(con)
             aid = reg_arch(con, 'Ada Lovelace')
             pid = reg_proc(con, 'AD102', aid)
@@ -38,8 +38,8 @@ def main():
             def print_gpu_menu_opt(timeout, *exceptions):
                 def pgpu_decorator(func):
                     @functools.wraps(func)
-                    def wrapper(*args, **kwargs):
-                        with SuppressAndExec(tuple({KeyboardInterrupt, *exceptions}), print_all_gpus_fn, idx, name, fn, d):
+                    def wrapper(idx_inner, *args, **kwargs):
+                        with SuppressAndExec(tuple({KeyboardInterrupt, *exceptions}), print_all_gpus_fn, idx_inner, name, fn, d):
                             reset_cursor()
                             print(func(*args, **kwargs), end='')
                             time.sleep(timeout)
