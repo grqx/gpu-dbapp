@@ -13,6 +13,7 @@ def current_year() -> int:
     return datetime.datetime.now().year
 
 
+# TODO: page
 def fmt_table(table: list[tuple], intersection: str = '+', hbar: str = '-',
               vbar: str = '|', lmargin: int = 1, rmargin: int = 1,
               align_to=str.center, fill_char=' ') -> str:
@@ -68,6 +69,7 @@ class FancyMenuKeyBinds:
     UP_KEYS: tuple[str]
 
 
+# TODO: page
 def fancy_console_menu(title: str,
                        options: list[tuple[str, typing.Optional[typing.Callable[[int, str, typing.Any, dict], tuple[bool, typing.Any]]]]],
                        bottom_note: str | None = None,
