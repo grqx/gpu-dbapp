@@ -1,12 +1,7 @@
-from flask import Flask, render_template
-
-app = Flask('app')
-
-
-@app.route('/')
-def index():
-    return render_template('index.html')
+from .flask_routes import setup_flask_app
+from flask import Flask
 
 
 def main():
+    app = setup_flask_app(Flask('app'))
     app.run(debug=True)

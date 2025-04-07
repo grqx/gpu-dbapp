@@ -32,12 +32,12 @@ p .magic-counter {
     cursor: pointer;
     display: inline-block;
     font-family: -apple-system, system-ui, "Segoe UI", "Liberation Sans", sans-serif;
-    font-size: 13px;
+    font-size: 1.8rem;
     font-weight: 400;
     line-height: 1.15385;
     margin: 0;
     outline: none;
-    padding: 8px .8em;
+    padding: 2.4em 1.8em;
     position: relative;
     text-align: center;
     text-decoration: none;
