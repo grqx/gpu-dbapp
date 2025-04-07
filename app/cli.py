@@ -102,3 +102,7 @@ def main():
                 ('Register a new GPU', make_reg_cb_partial(reg_gpu, 'GPU')),
                 ('Exit', exit_),
             ], default_idx=-1)[2])
+
+
+if __name__ == '__main__':
+    main()

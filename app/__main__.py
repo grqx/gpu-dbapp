@@ -1,4 +1,4 @@
-from ._entry import main
+from .flask_entry import main
 
 if __name__ == '__main__':
     main()
