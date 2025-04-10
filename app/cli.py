@@ -8,7 +8,7 @@ from .setup import (
     reg_series,
     reg_proc,
 )
-from .sql_statements import SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+from .sql_statements import SELECT_GET_GPU_DETAILS_TEMPL
 from .utils import fmt_table, fancy_console_menu, reset_cursor, SuppressAndExec, make_reg_callback
 
 import functools
@@ -50,7 +50,7 @@ def main():
             def perf_desc(*_args, **_kwargs):
                 return fmt_table(fetch_all_from_cursor(exec_statement(
                     con, (
-                        SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+                        SELECT_GET_GPU_DETAILS_TEMPL
                         .order_by(r'GPU.clock_speed_mhz', is_asc=False)
                         .order_by(r'GPU.vram_size_gb', is_asc=False)
                         .statement))))
@@ -59,7 +59,7 @@ def main():
             def price_desc(*_args, **_kwargs):
                 return fmt_table(fetch_all_from_cursor(exec_statement(
                     con, (
-                        SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+                        SELECT_GET_GPU_DETAILS_TEMPL
                         .order_by(r'GPU.price_cents', is_asc=False)
                         .statement
                     ))))
@@ -68,7 +68,7 @@ def main():
             def price_asc(*_args, **_kwargs):
                 return fmt_table(fetch_all_from_cursor(exec_statement(
                     con, (
-                        SELECT_GET_GPU_DETAILS_GIVEN_CONDITION
+                        SELECT_GET_GPU_DETAILS_TEMPL
                         .order_by(r'GPU.price_cents', is_asc=True)
                         .statement
                     ))))

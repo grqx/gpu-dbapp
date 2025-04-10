@@ -67,7 +67,7 @@ VALUES
 (?, ?, ?, ?, ?, ?, ?);
 '''
 
-SELECT_GET_GPU_DETAILS_GIVEN_CONDITION = SQL_SelectTempl(rf'''
+SELECT_GET_GPU_DETAILS_TEMPL = SQL_SelectTempl(rf'''
 SELECT
 GPU.name,
 Processor.proc_name,
@@ -88,4 +88,4 @@ INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
 ;
 ''')
 
-SELECT_GET_ALL_GPU_DETAILS = SELECT_GET_GPU_DETAILS_GIVEN_CONDITION.statement
+SELECT_GET_ALL_GPU_DETAILS = SELECT_GET_GPU_DETAILS_TEMPL.statement

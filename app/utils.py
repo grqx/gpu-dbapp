@@ -268,3 +268,23 @@ def make_reg_callback(db_reg_fn, name: str, conn: sqlite3.Connection, timeout: f
             print(f'Registered {name.lower()}, id: {id_}')
             time.sleep(timeout)
     return reg_cb
+
+
+def db_1res_to_dict(db_res: list[tuple]):
+    """
+    Transforms a list of 2 tuples to a dict. Useful for transforming fetch-one'd results into dicts.
+
+    >>> db_1res_to_dict([('a', 'b', 'c'), (1, 2)])
+    {'a': 1, 'b': 2}
+    >>> db_1res_to_dict([('a', 'b', 'c'), (1, 2, 3, 4)])
+    {'a': 1, 'b': 2, 'c': 3}
+    """
+    assert len(db_res) >= 2
+    # db_res[0] is the keys(headers)
+    # [1] is the values
+    hdrs, vals = db_res[0], db_res[1]
+    ret = {}
+    for idx, k in enumerate(hdrs):
+        if idx < len(vals):
+            ret[k] = vals[idx]
+    return ret

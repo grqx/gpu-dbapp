@@ -2,6 +2,7 @@ import copy
 import sqlite3
 import operator
 from typing import Any
+from . import DB_PATH
 
 
 class SQL_StatementTemplate:
@@ -63,6 +64,9 @@ class SQL_StatementTemplate:
     def stmt_and_params(self):
         """Const method to get the statement and params."""
         return self.statement, self.params
+
+    def execute_on_dbcon(self, con: sqlite3.Connection):
+        return exec_statement(con, *self.stmt_and_params)
 
 
 class SQL_SelectTempl(SQL_StatementTemplate):
@@ -169,3 +173,29 @@ def fetch_many_from_cursor(cursor: sqlite3.Cursor,
     if header:
         return (get_header_from_cursor(cursor), *r)
     return r
+
+
+def get_connection() -> sqlite3.Connection:
+    """
+    Lazy init db connection
+    It's the caller's duty to close the connection!
+    """
+    if not hasattr(get_connection, 'lock'):
+        import threading
+        get_connection.lock = threading.Lock()
+    with get_connection.lock:
+        if not hasattr(get_connection, 'con') or get_connection.con is None:
+            get_connection.con = sqlite3.connect(DB_PATH)
+        return get_connection.con
+
+
+def destroy_connection():
+    """
+    Close the connection from get_connection
+    """
+    if not hasattr(get_connection, 'lock'):
+        return  # not initialised
+    with get_connection.lock:
+        if hasattr(get_connection, "con"):
+            get_connection.con.close()
+            get_connection.con = None
