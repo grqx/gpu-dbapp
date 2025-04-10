@@ -21,7 +21,7 @@ def index():
 
 
 def index_html():
-    return render_template('index.html')
+    return render_template('/index.html')
 
 
 def gpu_info_page(gpu_id):
