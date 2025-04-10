@@ -26,7 +26,6 @@ def index_html():
 
 def gpu_info_page(gpu_id):
     con = get_connection()
-    con.cursor
     gpu_info = db_1res_to_dict(fetch_many_from_cursor(
         SELECT_GET_GPU_DETAILS_TEMPL
         .where(r'GPU.id', operator.eq, gpu_id)
