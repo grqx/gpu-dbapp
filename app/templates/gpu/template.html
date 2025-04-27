@@ -3,13 +3,34 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>{{gpu_name}} - My GPU Database</title>
+    <title>{{other_info['name']}} - My GPU Database</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='gpu/gpuInfo.css') }}">
     <script src="{{ url_for('static', filename='gpu/gpuInfo.js') }}"></script>
 </head>
 <body>
-    <p>GPU ID: {{gpu_id}}</p>
-    <p>Other info: {{other_info}}</p>
+    {#
+        GPU ID: {{gpu_id}}
+        other_info:
+        {'name': 'RTX 4090',
+         'proc_name': 'AD102',
+         'arch_name': 'Ada Lovelace',
+         'clock_speed_mhz': 2235,
+         'series_name': 'RTX 4000',
+         'release_year': 2022,
+         'manufacturer_name': 'Nvidia',
+         'founded_year': 1993,
+         'vram_size_gb': 24,
+         'price_cents': 159900}
+     #}
+    <p>GPU Name: {{other_info['name']}}</p>
+    <p>Processor: {{other_info['proc_name']}}</p>
+    <p>Architechture: {{other_info['arch_name']}}</p>
+    <p>Clock Speed: {{other_info['clock_speed_mhz']}} MHz</p>
+    <p>Series: {{other_info['series_name']}}</p>
+    <p>Year of Release: {{other_info['release_year']}}</p>
+    <p>Manufacturer: {{other_info['manufacturer_name']}}, founded in {{other_info['founded_year']}}</p>
+    <p>VRAM Size: {{other_info['vram_size_gb']}} GB</p>
+    <p>Recommended Retail Price: ${{other_info['price_cents']}} USD</p>
 </body>
 </html>
