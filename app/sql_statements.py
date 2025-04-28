@@ -89,3 +89,10 @@ INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
 ''')
 
 SELECT_GET_ALL_GPU_DETAILS = SELECT_GET_GPU_DETAILS_TEMPL.statement
+
+SELECT_MANU_INFO = SQL_SelectTempl(rf'''
+SELECT manufacturer_name, founded_year
+FROM Manufacturer
+{{{SQL_SelectTempl.SQL_MORE_PLACEHOLDER}}}
+;
+''')

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{manufacturer_name}} - GPU Manufacturer - My GPU Database</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='manufacturer/index.css') }}">
+    <script src="{{ url_for('static', filename='manufacturer/index.js') }}"></script>
+</head>
+<body>
+    <p>{{manufacturer_name}} is founded in {{founded_year}}. Here are some GPUs it has made:</p>
+    <table>
+        {% for item in gpus %}
+        <tr>
+            <td>{{item['name']}}</td>
+            <td>aaabbbccc</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
