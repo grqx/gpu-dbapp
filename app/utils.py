@@ -273,6 +273,8 @@ def make_reg_callback(db_reg_fn, name: str, conn: sqlite3.Connection, timeout: f
 def db_1res_to_dict(db_res: list[tuple]):
     """
     Transforms a list of 2 tuples to a dict. Useful for transforming fetch-one'd results into dicts.
+    Consider this as an "inner join" when there is a mismatch between the header and the data,
+    the data will only be added to the dict if both its header and itself are present.
 
     >>> db_1res_to_dict([('a', 'b', 'c'), (1, 2)])
     {'a': 1, 'b': 2}
@@ -288,3 +290,50 @@ def db_1res_to_dict(db_res: list[tuple]):
         if idx < len(vals):
             ret[k] = vals[idx]
     return ret
+
+
+def list_safeget(lst: list, idx: int, default=None):
+    try:
+        return lst[idx]
+    except ValueError:
+        return default
+
+
+def list_hasidx(lst: list, idx: int):
+    llen = len(lst)
+    return llen > idx >= -llen
+
+
+def db_manyres_to_dict_of_lists(db_res: list[tuple], null_placeholder=None):
+    """
+    Multi-result variant for db_1res_to_dict where data are stored in lists.
+    """
+    assert len(db_res) >= 1
+    ret: dict[str, list] = {}
+    hdrs = db_res[0]
+    if len(db_res) < 2:
+        for hdr in hdrs:
+            ret[hdr] = []
+        return ret
+    data = db_res[1:]
+    for idx, k in enumerate(hdrs):
+        for data_idx, vals in enumerate(data):
+            value = list_safeget(vals, idx, default=null_placeholder)
+            if isinstance(ret.get(k), list):
+                ret[k].append(value)
+            else:
+                ret[k] = [value]
+    return ret
+
+
+def apply_db_header(hdrs: tuple[str], data_row: tuple):
+    return {hdrs[idx]: val for idx, val in enumerate(data_row) if list_hasidx(hdrs, idx)}
+
+
+def foreach_apply_db_header(db_res: list[tuple]):
+    assert len(db_res) >= 1
+    hdrs, data = db_res[0], db_res[1:]
+    new_data: list[dict] = []
+    for data_row in data:
+        new_data.append(apply_db_header(hdrs, data_row))
+    return new_data

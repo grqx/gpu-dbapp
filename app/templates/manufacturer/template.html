@@ -11,10 +11,26 @@
 <body>
     <p>{{manufacturer_name}} is founded in {{founded_year}}. Here are some GPUs it has made:</p>
     <table>
+        <tr>
+            <th>Name</th>
+            <th>Processor Name</th>
+            <th>Architecture Name</th>
+            <th>Clock Speed (MHz)</th>
+            <th>Series</th>
+            <th>Year of Release</th>
+            <th>VRAM Size</th>
+            <th>Price (US cent)</th>
+        </tr>
         {% for item in gpus %}
         <tr>
             <td>{{item['name']}}</td>
-            <td>aaabbbccc</td>
+            <td>{{item['proc_name']}}</td>
+            <td>{{item['arch_name']}}</td>
+            <td>{{item['clock_speed_mhz']}}</td>
+            <td>{{item['series_name']}}</td>
+            <td>{{item['release_year']}}</td>
+            <td>{{item['vram_size_gb']}}</td>
+            <td>{{item['price_cents']}}</td>
         </tr>
         {% endfor %}
     </table>
