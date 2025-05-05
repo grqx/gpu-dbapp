@@ -129,3 +129,10 @@ FROM Manufacturer
 {{{SQL_SelectTempl.SQL_MORE_PLACEHOLDER}}}
 ;
 ''')
+
+SELECT_ARCH_INFO = SQL_SelectTempl(rf'''
+SELECT arch_name
+FROM Architecture
+{{{SQL_SelectTempl.SQL_MORE_PLACEHOLDER}}}
+;
+''')
