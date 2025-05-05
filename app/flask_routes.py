@@ -52,7 +52,7 @@ def manufacturer_info(manu_id):
         .execute_on_dbcon(con)))
     return render_template('manufacturer/template.html', **manu_info, gpus=(
         foreach_apply_db_header(fetch_all_from_cursor(
-            SELECT_GET_GPU_DETAILS_TEMPL
+            SELECT_GPU_DETAILS_WITH_ID_TEMPL
             .where(r'Manufacturer.manufacturer_id', operator.eq, manu_id)
             .execute_on_dbcon(con)))))
 

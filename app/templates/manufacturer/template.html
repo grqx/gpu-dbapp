@@ -23,9 +23,9 @@
         </tr>
         {% for item in gpus %}
         <tr>
-            <td>{{item['name']}}</td>
+            <td><a href="/gpu/{{ item['id'] }}">{{item['name']}}</a></td>
             <td>{{item['proc_name']}}</td>
-            <td>{{item['arch_name']}}</td>
+            <td><a href="/arch/{{ item['arch_id'] }}">{{item['arch_name']}}</a></td>
             <td>{{item['clock_speed_mhz']}}</td>
             <td>{{item['series_name']}}</td>
             <td>{{item['release_year']}}</td>
