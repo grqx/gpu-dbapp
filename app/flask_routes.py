@@ -13,7 +13,11 @@ from .db_utils import (
     fetch_all_from_cursor,
     fetch_many_from_cursor,
 )
-from .sql_statements import SELECT_GET_GPU_DETAILS_TEMPL, SELECT_MANU_INFO
+from .sql_statements import (
+    SELECT_GET_GPU_DETAILS_TEMPL,
+    SELECT_GPU_DETAILS_WITH_ID_TEMPL,
+    SELECT_MANU_INFO,
+)
 from .utils import db_1res_to_dict, foreach_apply_db_header
 
 
@@ -22,7 +26,10 @@ def index():
 
 
 def index_html():
-    return render_template('/index.html')
+    return render_template('/template.html', gpus=foreach_apply_db_header(
+        fetch_all_from_cursor(
+            SELECT_GPU_DETAILS_WITH_ID_TEMPL
+            .execute_on_dbcon(get_connection()))))
 
 
 def gpu_info_page(gpu_id):

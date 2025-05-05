@@ -88,6 +88,39 @@ INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
 ;
 ''')
 
+
+SELECT_GPU_DETAILS_WITH_ID_TEMPL = SQL_SelectTempl(rf'''
+SELECT
+GPU.id,
+GPU.name,
+
+Processor.proc_id,
+Processor.proc_name,
+
+Architecture.arch_id,
+Architecture.arch_name,
+
+GPU.clock_speed_mhz,
+
+Series.series_id,
+Series.series_name,
+Series.release_year,
+
+Manufacturer.manufacturer_id,
+Manufacturer.manufacturer_name,
+Manufacturer.founded_year,
+
+GPU.vram_size_gb,
+GPU.price_cents
+FROM GPU
+INNER JOIN Processor ON GPU.proc_id = Processor.proc_id
+INNER JOIN Architecture ON Processor.arch_id = Architecture.arch_id
+INNER JOIN Series ON GPU.series_id = Series.series_id
+INNER JOIN Manufacturer ON GPU.manufacturer_id = Manufacturer.manufacturer_id
+{{{SQL_SelectTempl.SQL_MORE_PLACEHOLDER}}}
+;
+''')
+
 SELECT_GET_ALL_GPU_DETAILS = SELECT_GET_GPU_DETAILS_TEMPL.statement
 
 SELECT_MANU_INFO = SQL_SelectTempl(rf'''

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>My GPUs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='index.css') }}">
+    {#<script src="{{ url_for('static', filename='index.js') }}"></script>#}
+</head>
+<body>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Processor Name</th>
+            <th>Architecture Name</th>
+            <th>Clock Speed (MHz)</th>
+            <th>Series</th>
+            <th>Year of Release</th>
+            <th>Manufacturer</th>
+            <th>Manufacturer Founded (year)</th>
+            <th>VRAM Size</th>
+            <th>Price (US cent)</th>
+        </tr>
+        {% for item in gpus %}
+        <tr>
+            <td><a href="/gpu/{{ item['id'] }}">{{item['name']}}</a></td>
+            <td>{{item['proc_name']}}</td>
+            <td>{{item['arch_name']}}</td>
+            <td>{{item['clock_speed_mhz']}}</td>
+            <td>{{item['series_name']}}</td>
+            <td>{{item['release_year']}}</td>
+            <td><a href="/manufacturer/{{ item['manufacturer_id'] }}">{{item['manufacturer_name']}}</a></td>
+            <td>{{item['founded_year']}}</td>
+            <td>{{item['vram_size_gb']}}</td>
+            <td>{{item['price_cents']}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
