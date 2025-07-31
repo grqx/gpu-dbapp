@@ -196,6 +196,6 @@ def destroy_connection():
     if not hasattr(get_connection, 'lock'):
         return  # not initialised
     with get_connection.lock:
-        if hasattr(get_connection, "con"):
+        if hasattr(get_connection, "con") and get_connection.con is not None:
             get_connection.con.close()
             get_connection.con = None
