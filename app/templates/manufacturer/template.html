@@ -5,8 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{{manufacturer_name}} - GPU Manufacturer - My GPU Database</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='site.css') }}">
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='table.css') }}">
     <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='manufacturer/index.css') }}">
-    <script src="{{ url_for('static', filename='manufacturer/index.js') }}"></script>
 </head>
 <body>
     <p>{{manufacturer_name}} is founded in {{founded_year}}. Here are some GPUs it has made:</p>
