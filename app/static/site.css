@@ -23,3 +23,21 @@ a:hover {
     text-decoration: underline;
 }
 
+div.icon-box {
+    width: 100px;
+    height: 40px;
+    display: flex;
+}
+
+div.icon-box span {
+    flex: 1;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+
+div.icon-box svg {
+    width: 40px;
+    height: 40px;
+}
